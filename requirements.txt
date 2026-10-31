@@ -1,0 +1,7 @@
+# Python 依赖（ffmpeg / ffprobe 需另装并放进 PATH）
+rembg>=2.0            # 抠主体
+onnxruntime>=1.16     # rembg 的推理后端（有 N 卡可换 onnxruntime-gpu）
+Pillow>=10
+numpy>=1.24
+opencv-python>=4.8    # cutout.py 的连通域过滤
+edge-tts>=7.3.1       # 配音

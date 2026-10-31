@@ -1,0 +1,13 @@
+node_modules/
+out/
+voice/
+fonts/
+.DS_Store
+
+# 示例素材不随仓库发布：比赛画面/球员肖像归转播方与本人，字体有各自的许可
+examples/*/assets/*
+!examples/*/assets/.gitkeep
+examples/*/card.css
+examples/*/card.js
+examples/*/index.html
+examples/*/timeline.json

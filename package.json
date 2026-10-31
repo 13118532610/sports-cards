@@ -1,0 +1,14 @@
+{
+  "name": "sports-cards",
+  "version": "1.0.0",
+  "description": "Vertical sports cards (1080x1440) from a script: grid stage, stroked yellow titles, cut-outs, photo cards — plus video assembly.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.58.2"
+  },
+  "license": "MIT"
+}

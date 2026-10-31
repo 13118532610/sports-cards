@@ -1,0 +1,77 @@
+/* card.css —— 竖版图卡的底座：网格舞台、黄标题、白说明、主体层。
+   规格全部来自参考片逐帧量出来的数：1080×1440、底色 #292929、网格 196px、黄字 #F5C400。 */
+:root{
+  --w:1080; --h:1440;
+  --bg:#292929;
+  --grid:#3a3a3a;
+  --grid-step:196px;
+  --gold:#F5C400;
+  --ink:#131313;
+  --paper:#ffffff;
+  --title-size:78px;
+  --cap-size:54px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#111}
+body{font-family:"PingFang SC","Noto Sans SC",sans-serif}
+
+/* 字体：默认用系统黑体；把字体文件放进 fonts/ 后按下面取名即可替换 */
+@font-face{font-family:Title;src:url(fonts/AlimamaShuHeiTi-Bold.ttf);font-weight:700}
+@font-face{font-family:Title;src:url(fonts/MiSans-Semibold.ttf);font-weight:600}
+
+#card{
+  position:relative;width:1080px;height:1440px;overflow:hidden;
+  background:var(--bg);color:#fff;isolation:isolate;
+}
+/* 网格：横竖各一层渐变，位置和参考片一致（线在 67,263,459…） */
+#card .grid{
+  position:absolute;inset:-200px;z-index:0;
+  background-image:
+    repeating-linear-gradient(90deg,var(--grid) 0 2px,transparent 2px var(--grid-step)),
+    repeating-linear-gradient(0deg,var(--grid) 0 2px,transparent 2px var(--grid-step));
+  background-position:67px 67px,67px 67px;
+  opacity:.95;
+}
+/* 暗角：四角压暗，让中间的图更立得住 */
+#card .vig{position:absolute;inset:0;z-index:1;
+  background:radial-gradient(ellipse at 50% 42%,transparent 42%,rgba(0,0,0,.42) 100%)}
+
+/* 标题：重黑体 + 黑描边 + 硬投影（参考片的招牌做法） */
+#card .title{
+  position:absolute;left:90px;right:90px;top:120px;z-index:3;
+  text-align:center;white-space:pre-line;
+  font:700 var(--title-size)/1.08 Title,"PingFang SC",sans-serif;
+  letter-spacing:1px;color:var(--gold);
+  -webkit-text-stroke:7px var(--ink);paint-order:stroke fill;
+  text-shadow:0 9px 0 var(--ink),0 14px 22px rgba(0,0,0,.6);
+}
+/* 主体：抠像或图片卡都放这一层 */
+/* 主体只占中间这一条（330–1220），标题和说明各占一头，谁也不压谁 */
+#card .subject{position:absolute;left:0;right:0;top:330px;bottom:220px;z-index:2;
+  display:flex;align-items:center;justify-content:center}
+#card .subject img{display:block;max-width:1000px;max-height:100%}
+#card .subject.cut img{
+  filter:drop-shadow(0 26px 34px rgba(0,0,0,.55)) contrast(1.03) saturate(1.02);
+}
+#card .subject.photo{padding:0 70px}
+#card .subject.photo img{
+  width:auto;height:auto;max-width:100%;max-height:100%;border-radius:10px;
+  box-shadow:0 28px 60px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.06);
+}
+/* 说明行：白字黑边，压在底部 */
+#card .caption{
+  position:absolute;left:70px;right:70px;bottom:96px;z-index:4;
+  text-align:center;white-space:pre-line;
+  font:700 var(--cap-size)/1.22 Title,"PingFang SC",sans-serif;
+  color:var(--paper);
+  -webkit-text-stroke:5px var(--ink);paint-order:stroke fill;
+  text-shadow:0 6px 0 var(--ink),0 10px 16px rgba(0,0,0,.6);
+}
+/* 角标：一行小字，最多一个（参考片里用来说明轮次/比分） */
+#card .badge{
+  position:absolute;left:0;right:0;top:auto;bottom:36px;z-index:4;text-align:center;
+  font:600 26px/1 "PingFang SC",sans-serif;color:#cfcfcf;letter-spacing:2px;
+  text-shadow:0 3px 8px #000a;opacity:.85;
+}
+/* 纯字卡：没有主体时，标题放大居中 */
+#card.textonly .title{top:50%;transform:translateY(-50%);font-size:96px}

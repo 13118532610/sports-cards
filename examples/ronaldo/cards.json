@@ -1,0 +1,69 @@
+{
+ "theme": {
+  "bg": "#292929",
+  "grid": "#3a3a3a",
+  "gold": "#F5C400",
+  "ink": "#131313",
+  "titleSize": 78,
+  "capSize": 54
+ },
+ "cards": [
+  {
+   "id": "c01",
+   "kind": "cutout",
+   "image": "assets/cut/ronaldo.png",
+   "title": "扬眉吐气！C罗进球后模仿\n边裁举旗嘲讽",
+   "caption": "扬眉吐气",
+   "layout": {
+    "h": 980,
+    "y": 330
+   }
+  },
+  {
+   "id": "c02",
+   "kind": "photo",
+   "image": "assets/photo_53.png",
+   "title": "沙特联赛第 12 轮\n利雅得胜利 5:3",
+   "caption": "利雅得胜利大胜对手",
+   "layout": {
+    "h": 780,
+    "y": 340
+   }
+  },
+  {
+   "id": "c03",
+   "kind": "text",
+   "title": "他两次进球\n都被吹了越位",
+   "caption": "两次都白庆祝"
+  },
+  {
+   "id": "c04",
+   "kind": "cutout",
+   "image": "assets/cut/stand.png",
+   "title": "进球后冲着边裁\n举起了旗",
+   "caption": "还模仿起边裁举旗",
+   "layout": {
+    "h": 1100,
+    "y": 300
+   }
+  },
+  {
+   "id": "c05",
+   "kind": "cutout",
+   "image": "assets/cut/ronaldo.png",
+   "title": "这次门前推射破门\n总算是有效了",
+   "caption": "门前轻松推射破门",
+   "layout": {
+    "h": 980,
+    "y": 330,
+    "shiftX": 60
+   }
+  },
+  {
+   "id": "c06",
+   "kind": "text",
+   "title": "仿佛在说\n这次怎么不吹了",
+   "caption": "他什么都没说，只举了旗"
+  }
+ ]
+}
