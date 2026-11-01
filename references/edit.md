@@ -55,3 +55,28 @@ node scripts/video.mjs --dir 片子目录 --no-audio          # 只出画面，�
 1. `ffprobe` 能打开、时长对得上（`duration` ≈ `timeline.json` 的 `duration`）。
 2. 响度 `-14 LUFS` 上下（`ffmpeg -i out.mp4 -af ebur128 -f null -`）。
 3. 抽 6 帧（每卡一帧）看过，没有黑帧、没有半张卡。
+
+
+## 转场与音效：一条片里不能重复
+
+`video.mjs` 里有两张表，靠 `theme.seed` 轮换。**换一条片，抽到的组合就不一样**——但如果种子不变，两条片会长得一样。
+
+| 转场 | 听感 | 配的音效 |
+|---|---|---|
+| `slideleft` / `wiperight` | 快切、干脆 | whoosh_1（亮、0.28s） |
+| `smoothleft` / `radial` / `fadeblack` | 滑、稳 | whoosh_2（暗、0.42s） |
+| `slideup` / `pixelize` | 有颗粒感、狠 | whoosh_3（双峰、0.46s） |
+| `circleopen` | 圆开、轻 | whoosh_2 |
+
+音效库（`sfx.py` 现场合成，不用外部素材）：
+
+| 文件 | 用途 | 谱质心 |
+|---|---|---|
+| `whoosh_1/2/3` | 转场，按种子轮换 | 5.4k / 1.4k / 3.4k Hz |
+| `impact_1` | 大标题落定 | 372 Hz |
+| `impact_2` | 结论、收尾 | 68 Hz |
+| `pop_1` / `pop_2` | 贴纸弹出（交替） | 1.3k / 1.1k Hz |
+| `tick` | 纯字卡出现 | 11k Hz |
+| `riser` | 开场一口气 | 8.3k Hz |
+
+**检查方法**：在每个转场处切 0.3 秒，算谱质心。六个转场的质心如果都一样，就是音效没换。

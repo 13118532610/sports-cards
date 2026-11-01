@@ -5,7 +5,8 @@
   "gold": "#F5C400",
   "ink": "#131313",
   "titleSize": 78,
-  "capSize": 54
+  "capSize": 54,
+  "seed": "offside-2026-11"
  },
  "cards": [
   {
@@ -25,7 +26,9 @@
      "y": 1222,
      "text": "01"
     }
-   ]
+   ],
+   "motion": "punch",
+   "titleStyle": "pop"
   },
   {
    "id": "c02",
@@ -39,7 +42,9 @@
      "y": 1222,
      "text": "02"
     }
-   ]
+   ],
+   "motion": "push",
+   "titleStyle": "blur"
   },
   {
    "id": "c03",
@@ -53,7 +58,9 @@
      "y": 1222,
      "text": "03"
     }
-   ]
+   ],
+   "motion": "pull",
+   "titleStyle": "rise"
   },
   {
    "id": "c04",
@@ -77,7 +84,9 @@
      "y": 1080,
      "rot": -8
     }
-   ]
+   ],
+   "motion": "panL",
+   "titleStyle": "pop"
   },
   {
    "id": "c05",
@@ -95,7 +104,9 @@
      "y": 1222,
      "text": "05"
     }
-   ]
+   ],
+   "motion": "panR",
+   "titleStyle": "blur"
   },
   {
    "id": "c06",
@@ -113,7 +124,9 @@
      "y": 1222,
      "text": "06"
     }
-   ]
+   ],
+   "motion": "push",
+   "titleStyle": "rise"
   },
   {
    "id": "c07",
@@ -127,7 +140,9 @@
      "y": 1222,
      "text": "07"
     }
-   ]
+   ],
+   "motion": "pull",
+   "titleStyle": "pop"
   }
  ]
 }

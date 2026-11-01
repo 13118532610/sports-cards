@@ -106,6 +106,8 @@ description: 竖版体育图卡与短视频（1080×1440、3:4）：一句文案
 
 `kind` 三选一：`cutout`（抠像，按高度定）、`photo`（照片卡，等比缩不裁）、`text`（纯字）。
 
+`motion` 可选：`punch` / `push` / `pull` / `panL` / `panR` / `float`（不写按位置轮换）；
+`titleStyle` 可选：`rise` / `pop` / `blur`；`theme.seed` 决定转场和音效的组合（换项目就换种子）。
 `stickers` 可选，三种：`badge`（编号章，建议放右下 908,1222）、`arrow`（手绘箭头，指证据）、`tape`（纸带，标题后面）。
 `badge` 不要放标题区，会压字。
 

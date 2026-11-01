@@ -49,13 +49,28 @@ if (!has('--no-audio')) {
   total = Math.min(total, voiceEnd + 0.45);
 }
 
-// 画面：xfade 串起来，转场交替用
+// 转场库：动作和声音成对，按种子轮换——换一条片，组合就不一样
+const TRANS = [
+  ['slideleft',  'whoosh_1'], ['smoothleft', 'whoosh_2'],
+  ['slideup',    'whoosh_3'], ['circleopen', 'whoosh_2'],
+  ['wiperight',  'whoosh_1'], ['pixelize',   'whoosh_3'],
+  ['radial',     'whoosh_2'], ['fadeblack',  'whoosh_2'],
+];
+const SEED = (() => {
+  const t = (C.theme && C.theme.seed) || dir;
+  let h = 0; for (const ch of String(t)) h = (h * 31 + ch.charCodeAt(0)) % 9973;
+  return h;
+})();
+const cuts = [];
 const vf = [];
 let last = '[0:v]';
+const WHOOSH = ['whoosh_1', 'whoosh_2', 'whoosh_3'];
 for (let i = 1; i < clips.length; i++) {
-  const tr = i % 2 ? 'slideleft' : 'wipeleft';
+  const pick = TRANS[(SEED + i * 3) % TRANS.length];
+  // 声音单独轮换，别跟着转场类型走（否则同一种 whoosh 会连着出现好几次）
+  cuts.push([pick[0], WHOOSH[(SEED + i) % WHOOSH.length]]);
   const out = `[v${i}]`;
-  vf.push(`${last}[${i}:v]xfade=transition=${tr}:duration=${TR}:offset=${(starts[i]).toFixed(3)}${out}`);
+  vf.push(`${last}[${i}:v]xfade=transition=${pick[0]}:duration=${TR}:offset=${(starts[i]).toFixed(3)}${out}`);
   last = out;
 }
 const filterV = (vf.length ? vf.join(';') + ';' : '') + `${last}null[vout]`;
@@ -80,9 +95,19 @@ if (!has('--no-audio')) {
   const sfx = path.join(dir, 'sfx');
   const hasSfx = await fs.access(sfx).then(() => true).catch(() => false);
   if (hasSfx) {
-    addAudio(path.join(sfx, 'impact.wav'), 0.32, 0.55);                     // 开头落标题
-    for (let i = 1; i < clips.length; i++) addAudio(path.join(sfx, 'whoosh.wav'), Math.max(0, starts[i] - 0.10), 0.45);
-    clips.forEach((c, i) => addAudio(path.join(sfx, 'pop.wav'), starts[i] + 0.18, 0.35));
+    const P = f => path.join(sfx, f);
+    addAudio(P('riser.wav'), 0.02, 0.28);                                  // 开场一口气
+    addAudio(P('impact_1.wav'), 0.30, 0.60);                               // 标题落定
+    cuts.forEach(([, snd], k) => addAudio(P(snd + '.wav'), Math.max(0, starts[k + 1] - 0.12), 0.5));
+    C.cards.slice(0, n).forEach((card, i) => {
+      const t0 = starts[i];
+      // 纯字卡：给一下轻点击，把注意力拉回字
+      if (card.kind === 'text') addAudio(P('tick.wav'), t0 + 0.05, 0.35);
+      // 有贴纸：弹一下，两个 pop 交替
+      if ((card.stickers || []).length) addAudio(P(i % 2 ? 'pop_2.wav' : 'pop_1.wav'), t0 + 0.20, 0.32);
+      // 最后一张（结论）：闷撞击
+      if (i === n - 1) addAudio(P('impact_2.wav'), t0 + 0.25, 0.45);
+    });
   }
   aFilters.push(`${Array.from({length: audioCount}, (_, k) => `[a${clips.length + k}]`).join('')}amix=inputs=${audioCount}:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]`);
 }

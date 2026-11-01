@@ -52,9 +52,12 @@ async function shrinkToFit(node, prop, min){
 
 // ---------- 贴纸：胶带 / 编号章 / 箭头 ----------
 function stickerHTML(st, p, idx){
-  const pop = Math.min(1, Math.max(0, (p-0.18)/0.22));           // 0.18 之后弹出来
-  const sc = 1 + 0.35*(1-pop);
-  const op = pop;
+  const raw = Math.min(1, Math.max(0, (p-0.16)/0.26));
+  const pop = 1-Math.pow(1-raw,3);                               // 回弹
+  const over = 1 + 0.22*Math.sin(raw*Math.PI);                    // 过冲
+  const sc = (0.6 + 0.4*pop) * over;
+  const op = Math.min(1, raw*2);
+  const wob = st.type==='badge' ? Math.sin(p*Math.PI*3)*2.2 : 0;  // 编号章轻轻晃
   if(st.type==='tape'){
     return `<div class="stk tape" style="left:${st.x??90}px;top:${st.y??96}px;width:${st.w??360}px;height:${st.h??54}px;
       transform:rotate(${st.rot??-6}deg) scaleX(${(0.6+0.4*pop).toFixed(3)});opacity:${(op*0.55).toFixed(3)}"></div>`;
@@ -62,7 +65,7 @@ function stickerHTML(st, p, idx){
   if(st.type==='badge'){
     const txt = st.text ?? String(idx+1).padStart(2,'0');
     return `<div class="stk badge" style="left:${st.x??880}px;top:${st.y??120}px;
-      transform:rotate(${st.rot??8}deg) scale(${sc.toFixed(3)});opacity:${op.toFixed(3)}">${txt}</div>`;
+      transform:rotate(${(st.rot??8)+wob}deg) scale(${sc.toFixed(3)});opacity:${op.toFixed(3)}">${txt}</div>`;
   }
   if(st.type==='arrow'){
     return `<div class="stk arrow" style="left:${st.x??700}px;top:${st.y??900}px;opacity:${(op*0.9).toFixed(3)};
@@ -81,8 +84,8 @@ async function render(i, progress){
   card.className=c.kind==='text'?'textonly':'';
   card.innerHTML='';
 
-  const grid=el('div','grid'), vig=el('div','vig');
-  card.append(grid,vig);
+  const grid=el('div','grid'), vig=el('div','vig'), sweep=el('div','sweep');
+  card.append(grid,vig,sweep);
 
   // 主体
   if(c.kind!=='text' && c.image){
@@ -131,23 +134,80 @@ async function render(i, progress){
     if(d.firstElementChild) card.appendChild(d.firstElementChild);
   });
 
-  // 运动：同一个 progress 永远画同一帧（逐帧渲染靠这个）
+  // ---------- 运动：同一个 progress 永远画同一帧 ----------
+  // 每张卡的动作不一样，靠 motion 字段选；没写就按位置轮换，保证一条片里不重样
   const p = progress==null?1:Math.max(0,Math.min(1,progress));
-  const gridEl=card.querySelector('.grid'); if(gridEl) gridEl.style.transform=`translate(${(-p*26).toFixed(1)}px,${(-p*18).toFixed(1)}px)`;
-  const subj=card.querySelector('.subject img');
-  if(subj) subj.style.transform=`scale(${(1+0.055*p).toFixed(4)}) translateY(${(-p*10).toFixed(1)}px)`;
-  // 入场只给第一张：后面的卡已经在转场里滑进来了，再淡入会变成"黑底滑进来"
-  const te=card.querySelector('.title');
-  if(te){
-    const e = i===0 ? 1-Math.pow(1-Math.min(1,p/0.22),3) : 1;
-    te.style.opacity=e.toFixed(3);
-    te.style.transform=e===1?'none':`translateY(${((1-e)*22).toFixed(1)}px) scale(${(1+(1-e)*0.07).toFixed(4)})`;
+  const MOTION = ['push','pull','panL','panR','punch','float'];
+  const mot = c.motion ?? MOTION[(i*3+1) % MOTION.length];
+  const ease = x => x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2;
+
+  // 背景：整体放大 + 位移，动得看得见（不是几像素的抖）
+  const gridEl = card.querySelector('.grid');
+  if (gridEl) {
+    const gs = 1.02 + 0.20*ease(p);
+    const gx = (mot==='panR'? -46 : 34) * ease(p);
+    const gy = (mot==='float'? 12*Math.sin(p*Math.PI*2) : -26*ease(p));
+    gridEl.style.transform = `translate(${gx.toFixed(1)}px,${gy.toFixed(1)}px) scale(${gs.toFixed(4)})`;
   }
-  const ce=card.querySelector('.caption');
-  if(ce){
-    const k = i===0 ? Math.min(1,Math.max(0,(p-0.12)/0.25)) : 1;
-    ce.style.opacity=k.toFixed(3);
-    ce.style.transform=k===1?'none':`translateY(${((1-k)*14).toFixed(1)}px)`;
+
+  // 主体：六种走法
+  const subj = card.querySelector('.subject img');
+  if (subj) {
+    let sc = 1, tx = 0, ty = 0;
+    const e = ease(p);
+    if (mot==='push'){ sc = 1+0.12*e; ty = -18*e; }
+    else if (mot==='pull'){ sc = 1.12-0.10*e; ty = 14*e; }
+    else if (mot==='panL'){ sc = 1.16; tx = 42*e; }    // 放大要盖过位移，不然照片会露边
+    else if (mot==='panR'){ sc = 1.16; tx = -42*e; }
+    else if (mot==='punch'){
+      const k = Math.min(1, p/0.34);            // 前 1/3 冲进来，后面缓过来
+      sc = 1 + 0.16*ease(k) - 0.06*ease(Math.max(0,(p-0.34)/0.66));
+      ty = -22*ease(k);
+    }
+    else { sc = 1.04 + 0.02*Math.sin(p*Math.PI); ty = 10*Math.sin(p*Math.PI*2); }
+    subj.style.transform = `scale(${sc.toFixed(4)}) translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px)`;
+  }
+
+  // 标题：第一张才做入场，后面三选一
+  const STYLE = ['rise','pop','blur'];
+  const ts = c.titleStyle ?? STYLE[i % STYLE.length];
+  const te = card.querySelector('.title');
+  if (te) {
+    if (i!==0) { te.style.opacity='1'; te.style.transform='none'; }
+    else {
+      const k = Math.min(1, p/0.30), e2 = ease(k);
+      if (ts==='pop'){
+        const over = 1 + 0.10*Math.sin(Math.min(1,k)*Math.PI);
+        te.style.transform = `scale(${(0.86 + 0.14*e2*over).toFixed(4)})`;
+      } else if (ts==='blur'){
+        te.style.transform = `translateY(${((1-e2)*10).toFixed(1)}px)`;
+        te.style.filter = `blur(${((1-e2)*14).toFixed(1)}px)`;
+      } else {
+        te.style.transform = `translateY(${((1-e2)*30).toFixed(1)}px)`;
+      }
+      te.style.opacity = Math.min(1, k*1.6).toFixed(3);
+    }
+  }
+
+  // 扫光：一道光慢慢扫过去，纯字卡全靠它撑住"在动"
+  const sw = card.querySelector('.sweep');
+  if (sw){
+    const x = (-60 + 220*ease(p)).toFixed(1);
+    sw.style.transform = `translateX(${x}%) rotate(0.001deg)`;
+    sw.style.opacity = (0.10 + 0.05*Math.sin(p*Math.PI)).toFixed(3);
+  }
+
+  // 标题：入场之后还在缓慢推近，不钉死
+  if (te && i!==0){
+    te.style.transform = `translateY(${(-8*p).toFixed(1)}px) scale(${(1+0.03*p).toFixed(4)})`;
+  }
+
+  // 说明行：延迟一点淡入，跟卡通一档
+  const ce = card.querySelector('.caption');
+  if (ce) {
+    const k = i===0 ? Math.min(1, Math.max(0,(p-0.10)/0.28)) : 1;
+    ce.style.opacity = k.toFixed(3);
+    ce.style.transform = k===1?'none':`translateY(${((1-k)*16).toFixed(1)}px)`;
   }
 
   // 等图片解码完再交回去，不然截图会截到空白

@@ -3,7 +3,7 @@
 :root{
   --w:1080; --h:1440;
   --bg:#292929;
-  --grid:#3a3a3a;
+  --grid:#414141;
   --grid-step:196px;
   --gold:#F5C400;
   --ink:#131313;
@@ -32,6 +32,10 @@ body{font-family:"PingFang SC","Noto Sans SC",sans-serif}
   background-position:67px 67px,67px 67px;
   opacity:.95;
 }
+/* 扫光：一条斜向高光，逐帧从一边扫到另一边 */
+#card .sweep{position:absolute;left:-40%;top:-20%;width:180%;height:140%;z-index:4;
+  background:linear-gradient(100deg,transparent 42%,rgba(255,255,255,.55) 50%,transparent 58%);
+  mix-blend-mode:screen;pointer-events:none}
 /* 暗角：四角压暗，让中间的图更立得住 */
 #card .vig{position:absolute;inset:0;z-index:1;
   background:radial-gradient(ellipse at 50% 42%,transparent 42%,rgba(0,0,0,.42) 100%)}
