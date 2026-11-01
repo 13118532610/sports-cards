@@ -42,7 +42,12 @@ for (let i = 0; i < n; i++) {
 const starts = [];
 let acc = 0;
 clips.forEach((c, i) => { starts.push(acc); acc += c.dur - (i < clips.length - 1 ? TR : 0); });
-const total = acc;
+let total = acc;
+// 配音已经结束就别再挂着空画面：留 0.45 秒收尾
+if (!has('--no-audio')) {
+  const voiceEnd = Math.max(...T.lines.slice(0, n).map((l, i) => Math.max(0, l.start - i * TR) + l.dur));
+  total = Math.min(total, voiceEnd + 0.45);
+}
 
 // 画面：xfade 串起来，转场交替用
 const vf = [];
