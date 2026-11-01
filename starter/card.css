@@ -74,4 +74,4 @@ body{font-family:"PingFang SC","Noto Sans SC",sans-serif}
   text-shadow:0 3px 8px #000a;opacity:.85;
 }
 /* 纯字卡：没有主体时，标题放大居中 */
-#card.textonly .title{top:50%;transform:translateY(-50%);font-size:96px}
+#card.textonly .title{top:50%;transform:translateY(-50%)}   /* 字号仍由 --title-size 控制，别写死 */

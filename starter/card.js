@@ -30,6 +30,26 @@ function fit(text, base, avail, min){
   return Math.max(min, Math.min(base, Math.floor(avail/longest*0.98)));
 }
 
+// 二分找“还能不折行的最大字号”：比一步步缩准，也不会缩过头
+async function shrinkToFit(node, prop, min){
+  const base = parseFloat(getComputedStyle(node).getPropertyValue(prop)) || 60;
+  const lines = (node.textContent||'').split('\n').length;
+  // 用“实际行数”判断，不要比像素：描边和行高会让 scrollHeight 多几个像素
+  const fits = () => {
+    const lh = parseFloat(getComputedStyle(node).lineHeight) || base*1.1;
+    return Math.round(node.scrollHeight / lh) <= lines;
+  };
+  if (fits()) return;                       // 起步就塞得下，不用动
+  let lo = min, hi = base;
+  for (let i=0;i<12;i++){
+    const mid = Math.round((lo+hi)/2);
+    node.style.setProperty(prop, mid+'px');
+    if (fits()) lo = mid; else hi = mid;
+    if (hi-lo<=1) break;
+  }
+  node.style.setProperty(prop, Math.floor(lo)+'px');
+}
+
 async function render(i){
   const c=CARDS.cards[i]; if(!c)throw new Error('没有第 '+i+' 张卡');
   const card=$('#card');
@@ -50,17 +70,18 @@ async function render(i){
     }else{
       img.style.height=(L.h||940)+'px';      // 抠像：按高度定，宽高比跟着走
     }
-    if(L.y!=null){ wrap.style.top=L.y+'px'; wrap.style.bottom='auto'; }
+    if(L.y!=null) wrap.style.top=L.y+'px';   // 底边保留，主体永远在安全带里
     if(L.shiftX) img.style.transform=`translateX(${L.shiftX}px)`;
     wrap.appendChild(img);
     card.appendChild(wrap);
   }
 
-  // 标题
+  // 标题：先按字数估一个，再按真实宽度收到不折行为止
   const t=el('div','title');
   t.textContent=c.title||'';
   t.style.setProperty('--title-size',fit(c.title||'',THEME.titleSize||78,900,48)+'px');
   card.appendChild(t);
+  await shrinkToFit(t,'--title-size',48);
 
   // 说明行
   if(c.caption){
@@ -68,6 +89,7 @@ async function render(i){
     p.textContent=c.caption;
     p.style.setProperty('--cap-size',fit(c.caption,THEME.capSize||54,900,36)+'px');
     card.appendChild(p);
+    await shrinkToFit(p,'--cap-size',36);
   }
 
   // 角标（可选，一行）
