@@ -75,3 +75,11 @@ body{font-family:"PingFang SC","Noto Sans SC",sans-serif}
 }
 /* 纯字卡：没有主体时，标题放大居中 */
 #card.textonly .title{top:50%;transform:translateY(-50%)}   /* 字号仍由 --title-size 控制，别写死 */
+
+/* ---------- 贴纸 ---------- */
+.stk{position:absolute;z-index:5;pointer-events:none}
+.stk.tape{z-index:2;background:linear-gradient(180deg,rgba(255,246,208,.42),rgba(236,214,150,.30));
+  border-left:1px dashed #ffffff33;border-right:1px dashed #ffffff33;box-shadow:0 3px 10px #0005}
+.stk.badge{width:86px;height:86px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font:800 34px/1 Num,sans-serif;color:#131313;background:radial-gradient(circle at 35% 30%,#ffe89a,#F5C400 65%,#c79a00);
+  border:4px solid #131313;box-shadow:0 8px 20px #0008;letter-spacing:1px}

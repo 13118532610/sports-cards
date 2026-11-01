@@ -68,9 +68,11 @@ description: 竖版体育图卡与短视频（1080×1440、3:4）：一句文案
 |---|---|
 | `frames.py` | 从比赛视频取帧（指定秒数或每隔 N 秒），出图 + 带时间码的联系表 |
 | `cutout.py` | 抠主体：rembg → 透明 PNG，自动裁到人、丢掉碎块、可手动框掉比分牌 |
-| `cards.mjs` | `cards.json` → 一张张 1080×1440 PNG；`--only` 只出几张，`--scale 2` 出 2160×2880 |
+| `cards.mjs` | `cards.json` → 一张张 1080×1440 PNG（静帧预览、单张发图用） |
+| `render.mjs` | `cards.json` + `timeline.json` → 每张卡一段带运动的 mp4（网格漂移、主体推近、标题进场、贴纸弹出） |
+| `sfx.py` | 现场合成三条音效：whoosh（转场）/ impact（标题落定）/ pop（贴纸弹出），不依赖外部素材 |
 | `voice.py` | `script.json` → 每句配音 + `timeline.json`（每句多长、卡停多久） |
-| `video.mjs` | 图卡 + 配音 → 1080×1440 mp4；`--music` 加底乐，`--no-audio` 只出画面 |
+| `video.mjs` | 逐帧片段 + 配音 + 音效 → 1080×1440 mp4；转场（slideleft/wipeleft）自动压时间轴并前移配音；`--music` 加底乐 |
 
 依赖：ffmpeg、Python（rembg、onnxruntime、Pillow、numpy、opencv-python、edge-tts）、Node + Playwright（Chromium）。
 装法见 `README.md`。
@@ -80,9 +82,10 @@ description: 竖版体育图卡与短视频（1080×1440、3:4）：一句文案
 1. 把 `starter/` 拷成片子目录（`index.html`、`card.css`、`card.js`），字体放进 `fonts/`。
 2. 图放 `assets/src/`（原图），抠好的放 `assets/cut/`（`cutout.py` 输出）。
 3. 写 `cards.json`：每卡 `id / kind / image / title / caption`，可加 `layout` 和 `badge`。
-4. `node scripts/cards.mjs --dir 片子目录` → `out/cards/*.png`。
+4. `node scripts/cards.mjs --dir 片子目录` → `out/cards/*.png`（静帧）；
+   `node scripts/render.mjs --dir 片子目录` → `out/clips/*.mp4`（带运动，做视频用这个）。
 5. 写 `script.json`（一卡一句，和卡序一一对应），`python scripts/voice.py 片子目录/script.json`。
-6. `node scripts/video.mjs --dir 片子目录` → `out/*.mp4`。
+6. `python scripts/sfx.py 片子目录/sfx` → 三条音效；`node scripts/video.mjs --dir 片子目录` → `out/*.mp4`。
 
 `cards.json` 的结构：
 
@@ -102,6 +105,9 @@ description: 竖版体育图卡与短视频（1080×1440、3:4）：一句文案
 ```
 
 `kind` 三选一：`cutout`（抠像，按高度定）、`photo`（照片卡，等比缩不裁）、`text`（纯字）。
+
+`stickers` 可选，三种：`badge`（编号章，建议放右下 908,1222）、`arrow`（手绘箭头，指证据）、`tape`（纸带，标题后面）。
+`badge` 不要放标题区，会压字。
 
 ## 一定要做到的
 

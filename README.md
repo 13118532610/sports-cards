@@ -77,9 +77,11 @@ python3 -c "from rembg import new_session; new_session('isnet-general-use')"   #
 | `references/lessons.md` | 18 条实战踩坑 |
 | `scripts/frames.py` | 从比赛视频取帧 + 带时间码的联系表 |
 | `scripts/cutout.py` | 抠主体（rembg），自动裁人、丢碎块、可框掉比分牌 |
-| `scripts/cards.mjs` | `cards.json` → 1080×1440 PNG |
+| `scripts/cards.mjs` | `cards.json` → 1080×1440 PNG（静帧） |
+| `scripts/render.mjs` | `cards.json` + `timeline.json` → 带运动的逐帧片段 |
+| `scripts/sfx.py` | 合成 whoosh / impact / pop 三条音效 |
 | `scripts/voice.py` | 逐句配音 + `timeline.json` |
-| `scripts/video.mjs` | 图卡 + 配音 → 竖版 mp4 |
+| `scripts/video.mjs` | 片段 + 配音 + 音效 → 竖版 mp4（转场、贴纸、响度 −14 LUFS） |
 | `starter/` | 卡片底座：`index.html` / `card.css` / `card.js` |
 | `examples/ronaldo/` | 一套 6 张卡的完整示例（素材不随仓库提供） |
 

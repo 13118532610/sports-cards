@@ -50,7 +50,32 @@ async function shrinkToFit(node, prop, min){
   node.style.setProperty(prop, Math.floor(lo)+'px');
 }
 
-async function render(i){
+// ---------- 贴纸：胶带 / 编号章 / 箭头 ----------
+function stickerHTML(st, p, idx){
+  const pop = Math.min(1, Math.max(0, (p-0.18)/0.22));           // 0.18 之后弹出来
+  const sc = 1 + 0.35*(1-pop);
+  const op = pop;
+  if(st.type==='tape'){
+    return `<div class="stk tape" style="left:${st.x??90}px;top:${st.y??96}px;width:${st.w??360}px;height:${st.h??54}px;
+      transform:rotate(${st.rot??-6}deg) scaleX(${(0.6+0.4*pop).toFixed(3)});opacity:${(op*0.55).toFixed(3)}"></div>`;
+  }
+  if(st.type==='badge'){
+    const txt = st.text ?? String(idx+1).padStart(2,'0');
+    return `<div class="stk badge" style="left:${st.x??880}px;top:${st.y??120}px;
+      transform:rotate(${st.rot??8}deg) scale(${sc.toFixed(3)});opacity:${op.toFixed(3)}">${txt}</div>`;
+  }
+  if(st.type==='arrow'){
+    return `<div class="stk arrow" style="left:${st.x??700}px;top:${st.y??900}px;opacity:${(op*0.9).toFixed(3)};
+      transform:rotate(${st.rot??-12}deg) scale(${(0.8+0.2*pop).toFixed(3)})">
+      <svg width="${st.w??160}" height="${st.h??90}" viewBox="0 0 160 90" fill="none">
+        <path d="M8 78 C 40 78, 92 62, 132 24" stroke="#F5C400" stroke-width="9" stroke-linecap="round"/>
+        <path d="M104 18 L 140 18 L 138 54" stroke="#F5C400" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg></div>`;
+  }
+  return '';
+}
+
+async function render(i, progress){
   const c=CARDS.cards[i]; if(!c)throw new Error('没有第 '+i+' 张卡');
   const card=$('#card');
   card.className=c.kind==='text'?'textonly':'';
@@ -97,6 +122,32 @@ async function render(i){
     const b=el('div','badge');
     b.textContent=c.badge;
     card.appendChild(b);
+  }
+
+  // 贴纸
+  (c.stickers||[]).forEach(st=>{
+    const d=document.createElement('div');
+    d.innerHTML=stickerHTML(st, progress==null?1:progress, i);
+    if(d.firstElementChild) card.appendChild(d.firstElementChild);
+  });
+
+  // 运动：同一个 progress 永远画同一帧（逐帧渲染靠这个）
+  const p = progress==null?1:Math.max(0,Math.min(1,progress));
+  const gridEl=card.querySelector('.grid'); if(gridEl) gridEl.style.transform=`translate(${(-p*26).toFixed(1)}px,${(-p*18).toFixed(1)}px)`;
+  const subj=card.querySelector('.subject img');
+  if(subj) subj.style.transform=`scale(${(1+0.055*p).toFixed(4)}) translateY(${(-p*10).toFixed(1)}px)`;
+  // 入场只给第一张：后面的卡已经在转场里滑进来了，再淡入会变成"黑底滑进来"
+  const te=card.querySelector('.title');
+  if(te){
+    const e = i===0 ? 1-Math.pow(1-Math.min(1,p/0.22),3) : 1;
+    te.style.opacity=e.toFixed(3);
+    te.style.transform=e===1?'none':`translateY(${((1-e)*22).toFixed(1)}px) scale(${(1+(1-e)*0.07).toFixed(4)})`;
+  }
+  const ce=card.querySelector('.caption');
+  if(ce){
+    const k = i===0 ? Math.min(1,Math.max(0,(p-0.12)/0.25)) : 1;
+    ce.style.opacity=k.toFixed(3);
+    ce.style.transform=k===1?'none':`translateY(${((1-k)*14).toFixed(1)}px)`;
   }
 
   // 等图片解码完再交回去，不然截图会截到空白

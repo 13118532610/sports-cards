@@ -1,86 +1,110 @@
-// video.mjs —— 图卡 + 配音 → 一条 1080×1440 的竖版 mp4
-//   node video.mjs --dir film                      # 读 film/timeline.json + film/cards.json + film/out/cards/*.png
-//   node video.mjs --dir film --music bgm.mp3      # 加一条底乐（自动压到人声下面）
-//   node video.mjs --dir film --no-audio           # 只要画面（默片预览）
-// 卡片顺序 = timeline.json 的顺序；一张卡的时长 = 这句话的长度 + gap，最后一张再加 tail。
+// video.mjs —— 逐帧片段 + 配音 + 音效 → 一条竖版成片
+//   node video.mjs --dir film                     # 读 out/clips/*.mp4 + timeline.json + sfx/
+//   node video.mjs --dir film --transition 0.24 --music bgm.mp3
+//   node video.mjs --dir film --no-audio
+// 转场会把时间线压短（每接一次少 transition 秒），配音和音效的位置跟着一起前移，保证对得上。
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 const arg = k => { const i = process.argv.indexOf(k); return i >= 0 ? process.argv[i + 1] : null; };
 const has = k => process.argv.includes(k);
-
 const dir = path.resolve(arg('--dir') ?? '.');
 const outDir = path.join(dir, 'out');
-const fps = Number(arg('--fps') ?? 30);
-const W = 1080, H = 1440;
-const cardsDir = path.resolve(arg('--cards') ?? path.join(outDir, 'cards'));
+const clipsDir = path.resolve(arg('--clips') ?? path.join(outDir, 'clips'));
+const TR = Number(arg('--transition') ?? 0.24);
 const music = arg('--music');
+const W = 1080, H = 1440, FPS = 30;
 
-const run = (cmd, args) => new Promise((res, rej) => {
-  const p = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+const run = (cmd, args, opts = {}) => new Promise((res, rej) => {
+  const p = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'], ...opts });
   p.on('close', c => c === 0 ? res() : rej(new Error(cmd + ' 退出码 ' + c)));
+});
+const probe = f => new Promise(res => {
+  const p = spawn('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]);
+  let s = ''; p.stdout.on('data', d => s += d); p.on('close', () => res(parseFloat(s.trim())));
 });
 
 const T = JSON.parse(await fs.readFile(path.join(dir, 'timeline.json'), 'utf8'));
 const C = JSON.parse(await fs.readFile(path.join(dir, 'cards.json'), 'utf8'));
-if (C.cards.length < T.lines.length) throw new Error(`cards.json 有 ${C.cards.length} 张卡，timeline.json 有 ${T.lines.length} 句，对不上`);
+const n = Math.min(T.lines.length, C.cards.length);
 
-await fs.mkdir(outDir, { recursive: true });
-
-// 1) 每张卡停多久
-const segs = T.lines.map((l, i) => {
-  const last = i === T.lines.length - 1;
-  const dur = l.dur + (l.gap || 0) + (last ? (T.tail || 0) : 0) + (i === 0 ? (T.pre || 0) : 0);
+// 片段
+const clips = [];
+for (let i = 0; i < n; i++) {
   const id = C.cards[i].id ?? String(i + 1).padStart(2, '0');
-  return { i, id, file: path.join(cardsDir, id + '.png'), dur: +dur.toFixed(3) };
-});
-for (const s of segs) await fs.access(s.file).catch(() => { throw new Error('缺图卡：' + s.file); });
-
-const list = path.join(outDir, 'concat.txt');
-await fs.writeFile(list, segs.map(s => `file '${s.file}'\nduration ${s.dur}`).join('\n') + `\nfile '${segs.at(-1).file}'\n`);
-
-// 2) 配音铺到时间线上
-const silent = path.join(outDir, 'silent.wav');
-let audio = null;
-if (!has('--no-audio')) {
-  const parts = [];
-  const filters = [];
-  let n = 0;
-  for (const l of T.lines) {
-    const f = path.resolve(dir, l.file);
-    const delay = Math.round((l.start + (l.i === 0 ? 0 : 0)) * 1000 / 1000 * 1000);
-    parts.push('-i', f);
-    filters.push(`[${n}:a]aresample=48000,adelay=${delay}|${delay}[a${n}]`);
-    n++;
-  }
-  const mixIn = Array.from({ length: n }, (_, i) => `[a${i}]`).join('');
-  let filter = `${filters.join(';')};${mixIn}amix=inputs=${n}:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[a]`;
-  const args = ['-y', ...parts, '-filter_complex', filter, '-map', '[a]', '-t', String(T.duration), silent];
-  await run('ffmpeg', args);
-  audio = silent;
-  if (music) {
-    const withMusic = path.join(outDir, 'mix.wav');
-    await run('ffmpeg', ['-y', '-i', silent, '-i', path.resolve(music), '-filter_complex',
-      `[1:a]volume=0.16,aloop=loop=-1:size=2e9[m];[0:a][m]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[a]`,
-      '-map', '[a]', '-t', String(T.duration), withMusic]);
-    audio = withMusic;
-  }
+  const f = path.join(clipsDir, id + '.mp4');
+  await fs.access(f).catch(() => { throw new Error('缺片段：' + f + '（先跑 render.mjs）'); });
+  clips.push({ file: f, dur: await probe(f) });
 }
 
-// 3) 画面 + 声音
-const out = path.join(outDir, arg('--name') ?? `vertical_${H}.mp4`);
-const vf = `scale=${W}:${H}:flags=lanczos,setsar=1,fps=${fps},format=yuv420p`;
-const args = ['-y', '-f', 'concat', '-safe', '0', '-i', list];
-if (audio) args.push('-i', audio);
-args.push('-vf', vf, '-c:v', 'libx264', '-preset', 'medium', '-crf', '19', '-movflags', '+faststart');
-if (audio) args.push('-c:a', 'aac', '-b:a', '192k', '-shortest');
-args.push(out);
+// 转场后的时间轴
+const starts = [];
+let acc = 0;
+clips.forEach((c, i) => { starts.push(acc); acc += c.dur - (i < clips.length - 1 ? TR : 0); });
+const total = acc;
+
+// 画面：xfade 串起来，转场交替用
+const vf = [];
+let last = '[0:v]';
+for (let i = 1; i < clips.length; i++) {
+  const tr = i % 2 ? 'slideleft' : 'wipeleft';
+  const out = `[v${i}]`;
+  vf.push(`${last}[${i}:v]xfade=transition=${tr}:duration=${TR}:offset=${(starts[i]).toFixed(3)}${out}`);
+  last = out;
+}
+const filterV = (vf.length ? vf.join(';') + ';' : '') + `${last}null[vout]`;
+
+// 声音：配音按转场后的时间落位，再加 whoosh / impact / pop
+const aIn = [];
+const aFilters = [];
+let ai = clips.length, audioCount = 0;
+const addAudio = (file, at, gain = 1) => {
+  aIn.push('-i', file);
+  const ms = Math.max(0, Math.round(at * 1000));
+  aFilters.push(`[${ai}:a]aresample=48000,aformat=channel_layouts=stereo,volume=${gain},adelay=${ms}|${ms}[a${ai}]`);
+  ai++; audioCount++;
+};
+
+if (!has('--no-audio')) {
+  // voice.py 给的是绝对时刻；前 i 次转场各压掉 TR 秒，位置跟着前移
+  T.lines.slice(0, n).forEach((l, i) => {
+    addAudio(path.resolve(dir, l.file), Math.max(0, l.start - i * TR));
+  });
+
+  const sfx = path.join(dir, 'sfx');
+  const hasSfx = await fs.access(sfx).then(() => true).catch(() => false);
+  if (hasSfx) {
+    addAudio(path.join(sfx, 'impact.wav'), 0.32, 0.55);                     // 开头落标题
+    for (let i = 1; i < clips.length; i++) addAudio(path.join(sfx, 'whoosh.wav'), Math.max(0, starts[i] - 0.10), 0.45);
+    clips.forEach((c, i) => addAudio(path.join(sfx, 'pop.wav'), starts[i] + 0.18, 0.35));
+  }
+  aFilters.push(`${Array.from({length: audioCount}, (_, k) => `[a${clips.length + k}]`).join('')}amix=inputs=${audioCount}:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[aout]`);
+}
+
+const out = path.join(outDir, arg('--name') ?? 'vertical.mp4');
+const args = ['-y'];
+clips.forEach(c => args.push('-i', c.file));
+args.push(...aIn);
+
+if (has('--no-audio')) {
+  args.push('-filter_complex', `${filterV}[vout]`, '-map', '[vout]');
+} else {
+  args.push('-filter_complex', `${filterV};${aFilters.join(';')}`, '-map', '[vout]', '-map', '[aout]');
+}
+args.push('-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS), '-movflags', '+faststart');
+if (!has('--no-audio')) args.push('-c:a', 'aac', '-b:a', '192k');
+args.push('-t', total.toFixed(3), out);
+
 await run('ffmpeg', args);
 
-const probe = await new Promise(res => {
-  const p = spawn('ffprobe', ['-v', 'error', '-show_entries', 'format=duration,size', '-of', 'default=nw=1', out]);
-  let s = ''; p.stdout.on('data', d => s += d); p.on('close', () => res(s.trim()));
-});
-console.log(`\n成片 → ${out}\n${probe}`);
-console.log(`卡 ${segs.length} 张，` + segs.map(s => `${s.id}:${s.dur.toFixed(1)}s`).join('  '));
+// 有底乐就再叠一层（压在人声下面）
+if (music && !has('--no-audio')) {
+  const withMusic = out.replace(/\.mp4$/, '_music.mp4');
+  await run('ffmpeg', ['-y', '-i', out, '-i', path.resolve(music), '-filter_complex',
+    '[1:a]volume=0.16,aloop=loop=-1:size=2e9[m];[0:a][m]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11[a]',
+    '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-t', total.toFixed(3), withMusic]);
+  console.log('（带底乐）', withMusic);
+}
+
+console.log(`\n成片 → ${out}\n时长 ${total.toFixed(2)}s，${clips.length} 张卡，转场 ${TR}s × ${clips.length - 1}`);

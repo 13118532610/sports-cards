@@ -1,28 +1,133 @@
 {
-  "theme": {"bg": "#292929", "grid": "#3a3a3a", "gold": "#F5C400", "ink": "#131313", "titleSize": 78, "capSize": 54},
-  "cards": [
-    {"id": "c01", "kind": "cutout", "image": "assets/cut/linesman.png",
-     "title": "边裁一举旗\n好球就没了", "caption": "越位到底在看什么",
-     "layout": {"h": 1050, "y": 315}},
-
-    {"id": "c02", "kind": "text",
-     "title": "越位就看三样\n半场、球、倒数第二人", "caption": "手和胳膊不算"},
-
-    {"id": "c03", "kind": "text",
-     "title": "站在越位位置\n本身不犯规", "caption": "这不等于没事"},
-
-    {"id": "c04", "kind": "photo", "image": "assets/src/celebrate.jpg",
-     "title": "要碰到球\n或者挡住人", "caption": "才算真正越位",
-     "layout": {"h": 660}},
-
-    {"id": "c05", "kind": "text",
-     "title": "有三种球\n永远不越位", "caption": "角球、界外球、球门球"},
-
-    {"id": "c06", "kind": "cutout", "image": "assets/cut/linesman.png",
-     "title": "现在连肩膀\n多出两厘米都算", "caption": "半自动越位，画线画到毫米",
-     "layout": {"h": 1050, "y": 315}},
-
-    {"id": "c07", "kind": "text",
-     "title": "越位判的不是位置\n是你有没有占便宜", "caption": "规则护的是公平，不是精确"}
-  ]
+ "theme": {
+  "bg": "#292929",
+  "grid": "#3a3a3a",
+  "gold": "#F5C400",
+  "ink": "#131313",
+  "titleSize": 78,
+  "capSize": 54
+ },
+ "cards": [
+  {
+   "id": "c01",
+   "kind": "cutout",
+   "image": "assets/cut/linesman.png",
+   "title": "边裁一举旗\n好球就没了",
+   "caption": "越位到底在看什么",
+   "layout": {
+    "h": 1050,
+    "y": 315
+   },
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "01"
+    }
+   ]
+  },
+  {
+   "id": "c02",
+   "kind": "text",
+   "title": "越位就看三样\n半场、球、倒数第二人",
+   "caption": "手和胳膊不算",
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "02"
+    }
+   ]
+  },
+  {
+   "id": "c03",
+   "kind": "text",
+   "title": "站在越位位置\n本身不犯规",
+   "caption": "这不等于没事",
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "03"
+    }
+   ]
+  },
+  {
+   "id": "c04",
+   "kind": "photo",
+   "image": "assets/src/celebrate.jpg",
+   "title": "要碰到球\n或者挡住人",
+   "caption": "才算真正越位",
+   "layout": {
+    "h": 660
+   },
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "04"
+    },
+    {
+     "type": "arrow",
+     "x": 700,
+     "y": 1080,
+     "rot": -8
+    }
+   ]
+  },
+  {
+   "id": "c05",
+   "kind": "photo",
+   "title": "有三种球\n永远不越位",
+   "caption": "角球、界外球、球门球",
+   "image": "assets/src/flag2.jpg",
+   "layout": {
+    "h": 720
+   },
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "05"
+    }
+   ]
+  },
+  {
+   "id": "c06",
+   "kind": "photo",
+   "image": "assets/src/var.jpg",
+   "title": "现在连肩膀\n多出两厘米都算",
+   "caption": "半自动越位，画线画到毫米",
+   "layout": {
+    "h": 700
+   },
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "06"
+    }
+   ]
+  },
+  {
+   "id": "c07",
+   "kind": "text",
+   "title": "越位判的不是位置\n是你有没有占便宜",
+   "caption": "规则护的是公平，不是精确",
+   "stickers": [
+    {
+     "type": "badge",
+     "x": 908,
+     "y": 1222,
+     "text": "07"
+    }
+   ]
+  }
+ ]
 }
