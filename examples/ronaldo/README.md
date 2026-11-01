@@ -14,7 +14,6 @@
 
 ```bash
 cd examples/ronaldo
-cp ../../starter/card.css ../../starter/card.js .     # 底座
 
 python ../../scripts/cutout.py assets/src/ronaldo.png assets/cut/ronaldo.png
 node  ../../scripts/cards.mjs --dir . --out out/cards

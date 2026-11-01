@@ -10,7 +10,4 @@ examples/ronaldo/assets/*          # 比赛画面/球员肖像，不能随仓库
 examples/offside/out/*
 examples/offside/voice/*
 examples/offside/fonts/*
-examples/*/card.css
-examples/*/card.js
-examples/*/index.html
 examples/*/timeline.json

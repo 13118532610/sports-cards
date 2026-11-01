@@ -10,8 +10,7 @@
 图片版权见 `CREDITS.md`。
 
 ```bash
-cd examples/offside
-cp ../../starter/card.css ../../starter/card.js .    # 底座
+cd examples/offside   # 三个模板文件已经在目录里了
 node ../../scripts/cards.mjs --dir . --out out/cards
 python ../../scripts/voice.py script.json
 node ../../scripts/video.mjs --dir .
